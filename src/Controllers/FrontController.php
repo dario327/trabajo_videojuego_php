@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Controllers;
 
 use Controllers\ErrorController;
+use Throwable;
 
 /**
  * Controlador frontal: único punto de entrada de la aplicación.
@@ -15,35 +16,31 @@ use Controllers\ErrorController;
  */
 class FrontController
 {
+    private const ACTION_DEFAULT = 'home';
+    private const RUTAS = [
+        "home" => [HomeController::class, "index"],
+        "registro" => [AuthController::class, "registro"],
+        "login" => [AuthController::class, "login"],
+        "logout" => [AuthController::class, "logout"],
+        "subir" => [JuegoController::class, "subir"],
+        "juegos" => [JuegoController::class, "listar"],
+    ];
     public static function main(): void
     {
-        // Controlador y acción: los de la URL o los predeterminados
-        $controller_name = $_GET['controller'] ?? CONTROLLER_DEFAULT;
-        $action_name = $_GET['action'] ?? ACTION_DEFAULT;
+        // Acción: los de la URL o los predeterminados
+        $action = $_GET['action'] ?? self::ACTION_DEFAULT;
 
-
-        // Construimos el nombre completo de la clase: baraja -> Controllers\BarajaController
-        $nombre_controlador = 'Controllers\\' . ucfirst($controller_name) . 'Controller';
-
-        // El controlador debe existir y no pueden invocarse el frontal ni el de errores
-        if (
-            !class_exists($nombre_controlador)
-            || in_array($nombre_controlador, [self::class, ErrorController::class], true)
-        ) {
+        if (!is_string($action) || !array_key_exists($action, self::RUTAS)) {
             ErrorController::show_error404();
             return;
         }
 
-        $controlador = new $nombre_controlador();
-
-        // is_callable comprueba si ese método está en la clase y
-        // además comprueba si quien pregunta puede llamarlo
-        //respeta la visibilidad: los métodos privados no cuentan
-        if (is_callable([$controlador, $action_name])) {
-            $controlador->$action_name();
-        } else {
-            ErrorController::show_error404();
+        [$clase, $metodo] = self::RUTAS[$action];
+        try {
+            (new $clase()) -> $metodo();
+        } catch (Throwable $e) {
+            error_log($e->getMessage());
+            ErrorController::show_error500();
         }
     }
-
 }

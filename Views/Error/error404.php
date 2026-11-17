@@ -3,5 +3,5 @@
 <p>La página solicitada no existe.</p>
 
 <p>
-    <a href="/">Volver al inicio</a>
+    <a href="index.php?accion=home">Volver al inicio</a>
 </p>

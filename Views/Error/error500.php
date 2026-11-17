@@ -2,4 +2,4 @@
 
 <p>Vaya, algo ha salido mal.</p>
 
-<p><a href="/">Volver al inicio</a></p>
+<p><a href="index.php?accion=home">Volver al inicio</a></p>
