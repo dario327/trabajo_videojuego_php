@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Controllers;
 
-use Lib\Pages;
+use Core\Pages;
 
 
 /**
@@ -17,12 +17,15 @@ class ErrorController{
     public static function show_error404(): void{
         http_response_code(404);
 
-        (new Pages())->render('error/error404');
+        (new Pages())->render('Error/error404');
     }
 
+    /**
+     * Error 500: fallo interno. Mensaje génrico, sin detalles técnicos.
+     */
     public static function show_error500(): void{
         http_response_code(500);
 
-        (new Pages())->render('error/error500');
+        (new Pages())->render('Error/error500');
     }
 }

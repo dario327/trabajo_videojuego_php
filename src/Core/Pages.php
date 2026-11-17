@@ -7,7 +7,7 @@ class Pages
 {
     /**
      * Ruta absoluta a la carpeta Views
-     * src/Lib/Pages.php->../../Views/
+     * src/Core/Pages.php->../../Views/
      */
     private const string VIEWS_DIR = __DIR__.'/../../Views/';
 
