@@ -28,7 +28,7 @@ class FrontController
     public static function main(): void
     {
         // Acción: los de la URL o los predeterminados
-        $action = $_GET['action'] ?? self::ACTION_DEFAULT;
+        $action = $_GET['accion'] ?? self::ACTION_DEFAULT;
 
         if (!is_string($action) || !array_key_exists($action, self::RUTAS)) {
             ErrorController::show_error404();
