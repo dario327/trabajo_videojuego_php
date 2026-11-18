@@ -3,19 +3,40 @@ declare(strict_types=1);
 
 namespace Requests;
 
-final class FormLoginRequest{
-    private array $datos = [];
+/**
+ * Sanea y valida el formulario de inicio de sesión.
+ *
+ * Solo comprueba que los campos no estén vacíos y que el correo tenga
+ * formato válido. Si las credenciales son correctas lo decide el modelo.
+ */
+final class formLoginRequest
+{
+    private string $email = '';
+    private string $password = '';
+
+    /** @var array<string, string> mensajes indexados por campo */
     private array $errores = [];
+
+    /** Evita ejecutar las validaciones dos veces */
+    private bool $validado = false;
 
     public function __construct(array $post, array $files = [])
     {
-        $this->sanear($post);
-        $this->sanear($files);
-        $this->validar();
+        // Correo: solo textos, trim() + FILTER_SANITIZE_EMAIL
+        $correo = is_string($post['email'] ?? null) ? trim($post['email']) : '';
+        $this->email = (string) filter_var($correo, FILTER_SANITIZE_EMAIL);
+
+        // La contraseña NO se sanea
+        $this->password = is_string($post['password'] ?? null) ? $post['password'] : '';
     }
 
     public function esValido(): bool
     {
+        if (!$this->validado) {
+            $this->validar();
+            $this->validado = true;
+        }
+
         return $this->errores === [];
     }
 
@@ -25,53 +46,44 @@ final class FormLoginRequest{
         return $this->errores;
     }
 
-    /** @return array<string, mixed> los datos saneados */
+    /** Permite añadir errores de reglas que dependen del modelo. */
+    public function agregarError(string $campo, string $mensaje): void
+    {
+        $this->errores[$campo] = $mensaje;
+    }
+
+    /**
+     * Valores saneados para rellenar de nuevo el formulario.
+     * Nunca incluye la contraseña.
+     *
+     * @return array<string, string>
+     */
     public function datos(): array
     {
-        return $this->datos;
+        return ['email' => $this->email];
     }
 
-    private function agregarError(string $campo, string $mensaje): void{
-
-    }
-    private function sanear(array $entrada): void
+    public function email(): string
     {
-        // El usuario puede manipular la petición: solo aceptamos textos
-        $texto = static fn(mixed $v): string => is_string($v) ? trim(strip_tags($v)) : '';
-        $this->datos = [
-            /*
-            'usuario' => $texto($entrada['usuario'] ?? ''),
-            'contraseña' => $texto($entrada['contraseña'] ?? '')
-            */
-        ];
+        return $this->email;
+    }
 
+    /** Devuelve la contraseña SIN sanear: solo para pasársela al modelo. */
+    public function password(): string
+    {
+        return $this->password;
     }
 
     private function validar(): void
     {
-        $d = $this->datos;
-
-        /*
-
-        // --- Usuario ---
-        if ($d['usuario'] === ''){
-            $this->errores['usuario'] = "El usuario es obligatorio.";
-        } elseif (mb_strlen($d['usuario']) < 5) {
-            $this->errores['usuario'] = "El usuario debe tener al menos 5 caracteres.";
-        } elseif (!preg_match('/^[\pL]+$/u', $d['usuario'])) {
-            $this->errores['usuario'] = "El usuario solo puede contener letras.";
-        }
-        // --- Contraseña ---
-        if ($d['contraseña'] !== '') {
-            $this->errores["contraseña"] = "La contraseña es obligatoria.";
-            if ($d["contraseña"] === ""){
-                $this->errores["contraseña"] = "La contraseña es obligatoria.";
-            } elseif (mb_strlen($d['contraseña']) < 5) {
-                $this->errores['contraseña'] = "La contraseña debe tener al menos 5 caracteres.";
-            }
+        if ($this->email === '') {
+            $this->errores['email'] = 'El correo electrónico es obligatorio.';
+        } elseif (filter_var($this->email, FILTER_VALIDATE_EMAIL) === false) {
+            $this->errores['email'] = 'El correo electrónico no tiene un formato válido.';
         }
 
-        */
+        if (trim($this->password) === '') {
+            $this->errores['password'] = 'La contraseña es obligatoria.';
+        }
     }
 }
-
