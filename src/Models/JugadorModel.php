@@ -43,7 +43,13 @@ final class JugadorModel
         return is_array($jugadores) ? $jugadores : [];
     }
 
-    /** ¿Existe ya ese nombre de usuario? (sin distinguir mayúsculas) */
+    /** ¿Existe ya ese no   mbre de usuario? (sin distinguir mayúsculas) */
+
+    /** Número total de jugadores registrados. */
+    public function total(): int
+    {
+        return count($this->todos());
+    }
     public function existeUsername(string $username): bool
     {
         $buscado = mb_strtolower($username);

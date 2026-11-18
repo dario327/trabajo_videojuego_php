@@ -1,5 +1,10 @@
 <h1>Plataforma de minijuegos</h1>
 
+<div class="contadores">
+    <p><strong><?= (int) $totalJuegos ?></strong> juegos</p>
+    <p><strong><?= (int) $totalJugadores ?></strong> jugadores</p>
+</div>
+
 <?php if ($usuario !== null): ?>
     <p>Bienvenido, <?= htmlspecialchars($usuario, ENT_QUOTES, 'UTF-8') ?></p>
     <ul>

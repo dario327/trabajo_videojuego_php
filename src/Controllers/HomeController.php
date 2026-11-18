@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Controllers;
 
 use Core\Pages;
+use Models\JugadorModel;
 
 /**
  * Fase 5: página principal.
@@ -17,6 +18,14 @@ class HomeController
         $bienvenido = $_GET['bienvenido'] ?? '';
         $usuario = (is_string($bienvenido) && $bienvenido !== '') ? $bienvenido : null;
 
-        (new Pages())->render('Home/home', ['usuario' => $usuario]);
+        // Contadores: los calculan los modelos, el controlador solo los pasa a la vista
+        $totalJugadores = (new JugadorModel(RUTA_JUGADORES))->total();
+        $totalJuegos = 0; // TODO: (new JuegoModel(RUTA_JUEGOS, RUTA_UPLOADS))->total() cuando Darío tenga su modelo
+
+        (new Pages())->render('Home/home', [
+            'usuario'        => $usuario,
+            'totalJugadores' => $totalJugadores,
+            'totalJuegos'    => $totalJuegos,
+        ]);
     }
 }
