@@ -36,19 +36,23 @@ class JuegoController
             'nombre_original' => $request->nombreOriginal(),
         ], $request->rutaTemporal());
 
-        header('Location: index.php?accion=jueegos');
+        // POST/Redirect/GET
+        header('Location: index.php?accion=juegos');
         exit;
     }
 
-    public function listar(): void{
+    /** Fase 4: listado de juegos. */
+    public function listar(): void
+    {
         $juegos = (new JuegoModel(RUTA_JUEGOS, RUTA_UPLOADS))->todos();
-        (new Pages)->render('Juego/juegos', ['juegos' => $juegos]);
+        (new Pages())->render('Juego/juegos', ['juegos' => $juegos]);
     }
 
-    private function mostrarFormulario(array $errores, array $datos): void{
-        (new Pages)->render('Juego/subir_juego', [
-            'errores' => $errores,
-            'datos' => $datos,
+    private function mostrarFormulario(array $errores, array $datos): void
+    {
+        (new Pages())->render('Juego/subir_juego', [
+            'errores'    => $errores,
+            'datos'      => $datos,
             'categorias' => CATEGORIAS,
         ]);
     }
