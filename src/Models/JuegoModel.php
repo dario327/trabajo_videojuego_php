@@ -3,61 +3,50 @@ declare(strict_types=1);
 
 namespace Models;
 
-use RuntimeException;
+use RunTimeException;
 
-/**
- * Lee y escribe data/juegos.json y guarda los ZIP subidos.
- */
-class JuegoModel
-{
-    /** Carpeta de subidas relativa a public/, para usarla directamente en el enlace. */
-    private const RUTA_PUBLICA = 'uploads/juegos/';
+class JuegoModel{
+    private const RUTA_PUBLICA = "uploads/juegos/";
 
-    public function __construct(private string $rutaJson, private string $rutaUploads)
-    {
-    }
+    public function __construct(private string $rutaJson, private string $rutaUploads){}
 
-    /** Lista de juegos. JSON inexistente o vacío => []. */
-    public function todos(): array
-    {
+    /* Lista de juegos. JSON inexistente o vacío => []. */
+    public function todos(): array{
         if (!is_file($this->rutaJson)) {
             return [];
         }
 
         $json = file_get_contents($this->rutaJson);
-        if ($json === false || trim($json) === '') {
+        if ($json === false || trim($json) === "") {
             return [];
         }
 
         $juegos = json_decode($json, true);
-        if (!is_array($juegos)) {
-            // JSON corrupto: lo captura el FrontController y muestra el 500
-            throw new RuntimeException('El fichero de juegos está corrupto.');
+        if(!is_array($juegos)){
+            throw new \RuntimeException("El fichero de juegos está corrupto");
         }
 
         return $juegos;
     }
 
-    /**
-     * Guarda el ZIP con nombre único y registra el juego.
-     * $datos: titulo, descripcion, autor, categoria, nombre_original.
+    /* Guardo el ZIP con nombre único y registra el juego.
+     * $datos: titulo, descripcion, autor, categoria, nombre_original
      */
-    public function guardar(array $datos, string $rutaTemporal): void
-    {
-        // 1. Carpetas de destino
-        foreach ([$this->rutaUploads, dirname($this->rutaJson)] as $carpeta) {
+    public function guardar(array $datos, string $rutaTemporal): void{
+        // 1. Carpteas de destino
+        foreach ([$this->rutaJson, dirname($this->rutaJson)] as $carpeta) {
             if (!is_dir($carpeta) && !mkdir($carpeta, 0755, true) && !is_dir($carpeta)) {
-                throw new RuntimeException('No se pudo crear la carpeta ' . basename($carpeta));
+                throw new RuntimeException('No se puedo crear la carpeta ' . basename($carpeta));
             }
         }
 
         // 2. Nombre propio y único: nunca se usa el nombre del usuario
-        $nombre = date('YmdHis') . '_' . bin2hex(random_bytes(8)) . '.zip';
+        $nombre = date('TmdHis') . '_' . bin2hex(random_bytes(8)) . '.zip';
         $destino = rtrim($this->rutaUploads, '/\\') . DIRECTORY_SEPARATOR . $nombre;
 
         // 3. Mover el temporal
         if (!move_uploaded_file($rutaTemporal, $destino)) {
-            throw new RuntimeException('No se pudo guardar el archivo subido.');
+            throw new RunTimeException("No se pudo guardar el archivo subido.");
         }
 
         // 4. Registrar en el JSON
@@ -71,10 +60,10 @@ class JuegoModel
             'nombre_original' => $datos['nombre_original'],
         ];
 
-        $json = json_encode($juegos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $json = json_encode($juegos, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         if ($json === false || file_put_contents($this->rutaJson, $json, LOCK_EX) === false) {
-            unlink($destino); // no dejamos un ZIP huérfano sin registro
-            throw new RuntimeException('No se pudo registrar el juego.');
+            unlink($destino); //no fejamos un ZIP huérfano sin registro
+            throw new RunTimeException("No se pudo registrar el juego.");
         }
     }
 }
