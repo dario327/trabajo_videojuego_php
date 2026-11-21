@@ -7,14 +7,20 @@ use Core\Pages;
 use Models\JuegoModel;
 use Requests\formSubirJuegoRequest;
 
-class JuegoController{
-    public function subir(): void{
+/**
+ * Subida y listado de juegos. Orquesta: sin validaciones ni HTML.
+ */
+class JuegoController
+{
+    /** Fase 3: GET muestra el formulario, POST lo procesa. */
+    public function subir(): void
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->mostrarFormulario([], []);
             return;
         }
 
-        $request = new FormSubirJuegoRequest($_POST, $_FILES);
+        $request = new formSubirJuegoRequest($_POST, $_FILES);
 
         if (!$request->esValido()) {
             $this->mostrarFormulario($request->errores(), $request->datos());

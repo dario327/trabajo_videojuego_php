@@ -3,7 +3,12 @@ declare(strict_types=1);
 
 namespace Requests;
 
-class formSubirJuegoRequest{
+/**
+ * Sanea y valida el formulario de subida de un juego (textos + ZIP).
+ * No conoce modelos ni usa echo/header().
+ */
+class formSubirJuegoRequest
+{
     private string $titulo;
     private string $descripcion;
     private string $categoria;
@@ -110,6 +115,7 @@ class formSubirJuegoRequest{
         $this->errores[$campo] = $mensaje;
     }
 
+    /** Valores saneados para rellenar de nuevo el formulario (el archivo no se puede rellenar). */
     public function datos(): array
     {
         return [
@@ -132,5 +138,69 @@ class formSubirJuegoRequest{
     public function categoria(): string
     {
         return $this->categoria;
+    }
+
+    /** Nombre original saneado: solo letras, números, guion, guion bajo y punto. Solo informativo. */
+    public function nombreOriginal(): string
+    {
+        $nombre = basename((string)($this->archivo['name'] ?? ''));
+        return preg_replace('/[^A-Za-z0-9._-]/', '_', $nombre) ?? '';
+    }
+
+    /** Ruta del fichero temporal de PHP. */
+    public function rutaTemporal(): string
+    {
+        return (string)($this->archivo['tmp_name'] ?? '');
+    }
+
+    /** Texto: quita espacios y etiquetas HTML. */
+    private function limpiarTexto(mixed $valor): string
+    {
+        return is_string($valor) ? trim(strip_tags($valor)) : '';
+    }
+
+    /** Comprobaciones del ZIP en orden; se detiene en el primer fallo. */
+    private function validarArchivo(): void
+    {
+        $error = $this->archivo['error'] ?? UPLOAD_ERR_NO_FILE;
+
+        // 1. Que se haya enviado y sin errores
+        if ($error !== UPLOAD_ERR_OK) {
+            $this->errores['archivo'] = match ($error) {
+                UPLOAD_ERR_NO_FILE => 'El archivo ZIP es obligatorio.',
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'El archivo supera el tamaño máximo permitido (10 MB).',
+                default => 'No se pudo subir el archivo. Inténtalo de nuevo.',
+            };
+            return;
+        }
+
+        $tmp = $this->rutaTemporal();
+
+        // 2. Que venga de una subida HTTP real
+        if (!is_uploaded_file($tmp)) {
+            $this->errores['archivo'] = 'El archivo no es válido.';
+            return;
+        }
+
+        // 3. Extensión .zip (en minúsculas)
+        $extension = strtolower(pathinfo((string)($this->archivo['name'] ?? ''), PATHINFO_EXTENSION));
+        if ($extension !== 'zip') {
+            $this->errores['archivo'] = 'El archivo debe tener extensión .zip.';
+            return;
+        }
+
+        // 4. Tipo MIME real (no el que dice el navegador en $_FILES['archivo']['type'])
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = $finfo !== false ? finfo_file($finfo, $tmp) : false;
+        if ($mime !== 'application/zip') {
+            $this->errores['archivo'] = 'El archivo no es un ZIP válido.';
+            return;
+        }
+
+        // 5. Tamaño máximo
+        $tamano = filesize($tmp);
+        if ($tamano === false || $tamano > MAX_ZIP) {
+            $this->errores['archivo'] = 'El archivo supera el tamaño máximo permitido (10 MB).';
+        }
     }
 }
